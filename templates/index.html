@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Tracker</title>
+<style>
+:root {
+  --bg: #F7F6F2; --surface: #fff; --border: #E2DFD6;
+  --text: #1A1916; --muted: #7A7870; --accent: #1A1916;
+  --green: #0F6E56; --green-bg: #E1F5EE;
+  --red: #A32D2D; --red-bg: #FCEBEB;
+  --amber: #854F0B; --amber-bg: #FAEEDA;
+  --blue: #185FA5; --blue-bg: #E6F1FB;
+  --r: 10px; --font: 'Georgia', serif; --mono: 'Courier New', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;min-height:100vh;}
+header{background:var(--text);color:var(--bg);padding:1.2rem 2rem;display:flex;align-items:baseline;gap:1rem;}
+header h1{font-size:20px;font-weight:normal;letter-spacing:.02em;}
+header small{font-family:var(--mono);font-size:11px;opacity:.45;}
+nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;}
+nav button{background:none;border:none;border-bottom:2px solid transparent;padding:13px 16px;font-size:14px;font-family:var(--font);color:var(--muted);cursor:pointer;transition:all .15s;}
+nav button:hover{color:var(--text);}
+nav button.active{color:var(--text);border-bottom-color:var(--text);}
+.page{display:none;padding:1.5rem 2rem;max-width:1100px;margin:0 auto;}
+.page.visible{display:block;}
+label{display:block;font-size:14px;font-family:var(--mono);color:var(--text);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:bold;}
+input,select,textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:17px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--text);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:6px;font-size:14px;font-family:var(--font);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s;}
+.btn:hover{background:var(--bg);}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+.btn-primary:hover{opacity:.85;}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green);}
+.btn-green:hover{opacity:.85;}
+.btn-danger{color:var(--red);border-color:#F0959560;}
+.btn-danger:hover{background:var(--red-bg);}
+.btn-sm{padding:5px 11px;font-size:13px;}
+.btn-xs{padding:3px 8px;font-size:12px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;margin-bottom:1.25rem;}
+.section-label{font-size:14px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--text);margin-bottom:.85rem;font-weight:bold;}
+
+.emphasis-label{font-weight:bold;color:var(--text);}
+.formula-text strong,.muted strong{font-weight:bold;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.product-fields-grid{display:grid;grid-template-columns:minmax(190px,1.05fr) minmax(190px,1.05fr) minmax(165px,210px) minmax(125px,140px) auto;gap:12px;align-items:start;}
+@media(max-width:900px){.product-fields-grid{grid-template-columns:1fr 1fr;}.custom-percent-field{padding-top:0;}}
+@media(max-width:650px){.product-fields-grid{grid-template-columns:1fr;}.price-percent-wrap{grid-template-columns:1fr;gap:10px;}.price-percent-wrap input[type=number]{max-width:none !important;}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;}
+.stat-label{font-size:13px;font-family:var(--mono);color:var(--text);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;font-weight:bold;}
+.stat-value{font-size:24px;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th{padding:8px 12px;text-align:left;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);font-weight:normal;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg);}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-family:var(--mono);}
+.tag-amber{background:var(--amber-bg);color:var(--amber);}
+.tag-green{background:var(--green-bg);color:var(--green);}
+.tag-blue{background:var(--blue-bg);color:var(--blue);}
+.amt{font-family:var(--mono);color:var(--green);}
+.muted{color:var(--muted);font-size:13px;}
+.mono{font-family:var(--mono);}
+
+/* Sale builder */
+.sale-builder{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1rem;}
+.sale-builder-header{background:var(--bg);padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+.sale-builder-body{padding:1rem;}
+.product-block{border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:.75rem;position:relative;background:var(--bg);}
+.product-block.has-error{border-color:var(--red);background:var(--red-bg);}
+.product-block-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;}
+.product-block-title{font-size:13px;font-family:var(--mono);color:var(--text);font-weight:bold;}
+.formula-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.ingredient-combobox{position:relative;flex:2;min-width:220px;display:block;}
+/* Searchable ingredient dropdown: one field that visually behaves like the original select box. */
+.ingredient-combobox input.ingredient-select{width:100%;border-radius:6px;padding-right:40px;background:var(--surface);color:var(--text);}
+.ingredient-combobox .ingredient-toggle{position:absolute;right:1px;top:1px;bottom:1px;width:38px;border:none;border-left:1px solid var(--border);border-radius:0 5px 5px 0;background:var(--surface);cursor:pointer;color:var(--text);font-size:14px;}
+.ingredient-combobox .ingredient-toggle:hover{background:var(--bg);}
+.ingredient-options{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:230px;overflow-y:auto;background:#fff;color:#1A1916;border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,.12);z-index:9999;}
+.ingredient-options.open{display:block;}
+.ingredient-option{width:100%;text-align:left;padding:10px 12px;border:none;background:#fff;color:#1A1916;font-family:var(--font);font-size:17px;cursor:pointer;}
+.ingredient-option:hover,.ingredient-option.active{background:var(--bg);}
+.ingredient-option-empty{padding:8px 11px;background:#fff;color:var(--muted);font-size:13px;font-family:var(--mono);}
+.formula-row input[type=number]{flex:1;max-width:80px;}
+.product-block:not(.custom-percent-mode) .formula-row input[type=number]{display:none;}
+.product-block:not(.custom-percent-mode) .pct-total{display:none;}
+.formula-row .custom-ing{flex:1.4;min-width:140px;}
+/* Payment rows need different sizing than ingredient rows.
+   Keep the method smaller and make the dollar amount readable. */
+.payment-row select{flex:0 0 240px;}
+.payment-row .custom-pay{flex:1;min-width:180px;}
+.payment-row .pay-amount{width:150px;max-width:150px !important;min-width:130px;}
+.payment-row{align-items:end;}
+.payment-method-field{flex:0 0 240px;}
+.payment-method-field select{width:100%;}
+.payment-custom-field{flex:1;min-width:180px;}
+.payment-custom-field input{width:100%;}
+.payment-total-field{flex:0 0 150px;}
+.payment-total-field input{width:100%;}
+.payment-delete-btn{margin-bottom:0;}
+.price-percent-wrap{display:block;}
+.price-percent-wrap input[type=number]{width:100% !important;min-width:150px !important;max-width:210px !important;}
+.custom-percent-field{display:flex;align-items:end;padding-top:16px;}
+.custom-percent-field .custom-percent-toggle{white-space:nowrap;}
+.essence-no-field input{max-width:120px !important;min-width:95px !important;}
+.pct-total{font-family:var(--mono);font-size:13px;padding:4px 10px;border-radius:6px;margin-top:4px;display:inline-block;}
+.pct-ok{background:var(--green-bg);color:var(--green);}
+.pct-bad{background:var(--red-bg);color:var(--red);}
+.pct-mid{background:var(--amber-bg);color:var(--amber);}
+
+/* Day view */
+.day-group{margin-bottom:1.5rem;}
+.day-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;}
+.day-title{font-size:16px;font-weight:normal;}
+.day-meta{font-family:var(--mono);font-size:12px;color:var(--muted);}
+.sale-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:.5rem;overflow:hidden;}
+.sale-row-header{padding:.6rem 1rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border-bottom:1px solid transparent;}
+.sale-row-header:hover{background:var(--bg);}
+.sale-row-header.open{border-bottom-color:var(--border);}
+.sale-row-body{padding:.75rem 1rem;display:none;}
+.sale-row-body.open{display:block;}
+.formula-text{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border-radius:var(--r);padding:1.5rem;width:min(700px,95vw);max-height:90vh;overflow-y:auto;position:relative;}
+.modal-title{font-size:17px;margin-bottom:1rem;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
+.modal-close:hover{color:var(--text);}
+
+/* Search bar */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+.toolbar input,.toolbar select{max-width:220px;}
+
+/* Toast */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--text);color:var(--bg);padding:.75rem 1.25rem;border-radius:8px;font-family:var(--mono);font-size:13px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;}
+.toast.show{opacity:1;}
+
+.empty{text-align:center;padding:2.5rem;color:var(--muted);font-size:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sales Tracker</h1>
+  <small id="role-badge"></small>
+  <button class="btn btn-xs" style="margin-left:auto;" onclick="logout()">Logout</button>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('log')">New Sale</button>
+  <button onclick="showPage('today')">Today's Sales</button>
+  <button data-admin-only="true" onclick="showPage('history')">Sales History</button>
+  <button onclick="showPage('labels')">Labels</button>
+  <button data-admin-only="true" onclick="showPage('days')">By Day</button>
+  <button data-admin-only="true" onclick="showPage('reports')">Reports</button>
+</nav>
+
+<!-- ═══════════ NEW SALE ═══════════ -->
+<div class="page visible" id="page-log">
+  <div class="grid2" style="margin-bottom:1.25rem;" id="dash-stats" data-admin-only="true">
+    <div class="stat"><div class="stat-label">Today's products sold</div><div class="stat-value" id="d-count">—</div></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label emphasis-label">Customer</div>
+    <div class="grid3" style="margin-bottom:1rem;">
+      <div>
+        <label>Customer name *</label>
+        <input id="new-customer" placeholder="" />
+      </div>
+      <div>
+        <label>Date *</label>
+        <input id="new-date" type="date" />
+      </div>
+      <div>
+        <label>Sale notes (optional)</label>
+        <input id="new-notes" placeholder="" />
+      </div>
+    </div>
+
+    <div id="products-container"></div>
+    <button class="btn btn-sm" onclick="addProductBlock()" style="margin-bottom:1rem;">+ Add product</button>
+
+    <div id="payment-section" style="margin-bottom:1rem;">
+      <div id="payments-container"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap;">
+        <button class="btn btn-xs" onclick="addPaymentRow('payments-container','products-container')">+ payment method</button>
+        <button class="btn btn-xs" onclick="fillPaymentTotal('payments-container','products-container')">Fill sale total</button>
+        <span class="pct-total pct-mid" id="payments-total-label">$0.00 / $0.00</span>
+        <span class="muted">For split payments, add rows like Cash $20 + Card $5.</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn btn-primary" onclick="submitSale()">Save Sale</button>
+      <button class="btn" onclick="resetForm()">Clear</button>
+      <span id="save-err" style="font-size:13px;color:var(--red);font-family:var(--mono);display:none;"></span>
+    </div>
+  </div>
+
+  <div class="section-label">Recent sales</div>
+  <div id="recent-list"></div>
+</div>
+
+
+<!-- ═══════════ TODAY'S SALES ═══════════ -->
+<div class="page" id="page-today">
+  <div class="card">
+    <div class="section-label">Today's Sales</div>
+    <div class="muted" style="margin-bottom:.75rem;">Employees can edit today's sales to fix mistakes. Older sales are admin-only.</div>
+    <div id="today-sales-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════ LABEL QUEUE ═══════════ -->
+<div class="page" id="page-labels">
+  <div class="toolbar">
+    <select id="label-status-filter" onchange="renderLabels()">
+      <option value="not_printed">Not printed</option>
+      <option value="error">Errors</option>
+      <option value="simulated">Simulated/test printed</option>
+      <option value="printed">Printed</option>
+      <option value="">All labels</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="printAllLabels()">Print All Visible/Unprinted</button>
+    <button class="btn btn-sm" onclick="renderLabels()">Refresh</button>
+  </div>
+  <div class="card">
+    <div class="section-label">Label Queue</div>
+    <div class="muted" style="margin-bottom:.75rem;">Every product in a sale becomes one label job. In simulation mode, printing creates preview JSON files instead of using the Brother printer.</div>
+    <div id="labels-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════ HISTORY ═══════════ -->
+<div class="page" id="page-history">
+  <div class="toolbar">
+    <input id="hist-search" placeholder="" oninput="renderHistory()" />
+    <select id="hist-sort" onchange="renderHistory()">
+      <option value="date-desc">Newest first</option>
+      <option value="date-asc">Oldest first</option>
+    </select>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<!-- ═══════════ BY DAY ═══════════ -->
+<div class="page" id="page-days">
+  <div class="toolbar">
+    <select id="day-filter-mode" onchange="onDayFilterModeChange()">
+      <option value="month">By Month</option>
+      <option value="day">Specific Day</option>
+      <option value="year">By Year</option>
+    </select>
+    <input id="day-filter-month" type="month" onchange="renderDays()" />
+    <input id="day-filter-day" type="date" style="display:none;" onchange="renderDays()" />
+    <select id="day-filter-year" style="display:none;" onchange="renderDays()"></select>
+  </div>
+  <div id="days-list"></div>
+</div>
+
+<!-- ═══════════ REPORTS ═══════════ -->
+<div class="page" id="page-reports">
+  <div style="display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center;">
+    <select id="export-year" style="max-width:120px;"></select>
+    <button class="btn btn-green btn-sm" onclick="exportExcel('year', document.getElementById('export-year').value)">Export Year → Excel</button>
+    <button class="btn btn-sm" onclick="exportOverallRevenue()">Export Overall Revenue → Excel</button>
+  </div>
+  <div class="grid2" style="margin-bottom:1.25rem;">
+    <div class="card">
+      <div class="section-label">Top products</div>
+      <table><thead><tr><th>Product</th><th>Sales</th><th>Revenue</th></tr></thead>
+      <tbody id="rpt-prod"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="section-label">Top customers</div>
+      <table><thead><tr><th>Customer</th><th>Sales</th><th>Spent</th></tr></thead>
+      <tbody id="rpt-cust"></tbody></table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Top ingredients by revenue</div>
+    <table><thead><tr><th>Ingredient</th><th>Used in (products)</th><th>Weighted revenue</th></tr></thead>
+    <tbody id="rpt-ing"></tbody></table>
+  </div>
+</div>
+
+<!-- ═══════════ EDIT MODAL ═══════════ -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Edit Sale</div>
+    <div id="modal-body"></div>
+    <div style="display:flex;gap:10px;margin-top:1rem;align-items:center;">
+      <button class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <span id="edit-err" style="font-size:13px;color:var(--red);font-family:var(--mono);display:none;margin-left:4px;"></span>
+      <button class="btn btn-danger btn-sm" data-admin-only="true" style="margin-left:auto;" onclick="deleteSale()">Delete sale</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<noscript><p style="padding:2rem;color:red;">JavaScript is required to use this app.</p></noscript>
+
+<script>
+// ── IMPORTANT: This file must be served through app.py (via START.bat), ──────
+// ── NOT opened directly in a browser. Opening index.html directly will   ──────
+// ── show a syntax error because Flask template tags need Flask to render. ──────
+const INGREDIENTS = {{ ingredients | tojson }};
+const PRODUCT_TYPES = {{ product_types | tojson }};
+const PAYMENT_METHODS = {{ payment_methods | tojson }};
+const USER_ROLE = {{ role | tojson }};
+const IS_ADMIN = USER_ROLE === 'admin';
+let editingSaleId = null;
+let printRequestInProgress = false;
+
+// ── UTILS ────────────────────────────────────────────────────────────────────
+const fmt$ = n => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const fmtDate = s => { const d = new Date(s+'T00:00:00'); return d.toLocaleDateString('en-CA',{weekday:'short',month:'short',day:'numeric',year:'numeric'}); };
+const today = () => {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+const escapeAttr = value => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;');
+
+
+function toast(msg, ms=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+async function api(url, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+function showPage(id) {
+  if (!IS_ADMIN && !['log','today','labels'].includes(id)) {
+    toast('Admin access required.');
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('visible'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('visible');
+  const btn = [...document.querySelectorAll('nav button')].find(b => b.getAttribute('onclick') === `showPage('${id}')`);
+  if (btn) btn.classList.add('active');
+  if (id==='log') { if (IS_ADMIN) loadDash(); renderRecent(); }
+  if (id==='today') renderTodaySales();
+  if (id==='history') renderHistory();
+  if (id==='labels') renderLabels();
+  if (id==='days') renderDays();
+  if (id==='reports') renderReports();
+}
+
+// ── INGREDIENT BUILDER ───────────────────────────────────────────────────────
+function makeFormulaRow(blockId, ing={name:'',pct:''}) {
+  const rowId = 'fr-' + Date.now() + Math.random().toString(36).slice(2);
+  const isCustom = ing.name && !INGREDIENTS.includes(ing.name);
+  const inputVal = isCustom ? 'Custom' : (ing.name || '');
+  return `
+  <div class="formula-row" id="${rowId}">
+    <div class="ingredient-combobox">
+      <input class="ingredient-select" placeholder="" value="${inputVal}"
+        onfocus="openIngredientDropdown('${rowId}')"
+        oninput="filterIngredientDropdown('${rowId}')"
+        onkeydown="ingredientKeydown(event,'${rowId}')"
+        data-row="${rowId}" autocomplete="off" />
+      <button type="button" class="ingredient-toggle" onclick="toggleIngredientDropdown('${rowId}')">▾</button>
+      <div class="ingredient-options" id="${rowId}-ingredient-options"></div>
+    </div>
+    ${isCustom ? `<input class="custom-ing" placeholder="" value="${ing.name}" data-row="${rowId}" />` : `<span class="custom-ing" style="display:none;" data-row="${rowId}"></span>`}
+    <input type="number" min="0" max="100" step="0.1" placeholder="%" value="${ing.pct||''}" style="max-width:75px;" onchange="updatePctTotal('${blockId}')" oninput="updatePctTotal('${blockId}')" />
+    <button class="btn btn-xs btn-danger" onclick="removeFormulaRow('${rowId}','${blockId}')">✕</button>
+  </div>`;
+}
+
+function ingredientOptionsFor(rowId) {
+  const row = document.getElementById(rowId);
+  if (!row) return [];
+  const q = (row.querySelector('.ingredient-select')?.value || '').trim().toLowerCase();
+  // Important: when the search box is erased, show the full dropdown again.
+  return INGREDIENTS.filter(i => !q || i.toLowerCase().includes(q));
+}
+
+function renderIngredientOptions(rowId) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  const box = document.getElementById(rowId+'-ingredient-options');
+  if (!box) return;
+  const opts = ingredientOptionsFor(rowId);
+  if (!opts.length) {
+    box.innerHTML = '<div class="ingredient-option-empty">No matches — choose Custom for a new ingredient</div>';
+    return;
+  }
+  box.innerHTML = opts.map((i, idx)=>
+    `<button type="button" class="ingredient-option${idx===0?' active':''}" onclick="selectIngredient('${rowId}', ${JSON.stringify(i).replace(/"/g,'&quot;')})">${i}</button>`
+  ).join('');
+}
+
+function openIngredientDropdown(rowId) {
+  closeIngredientDropdowns(rowId);
+  renderIngredientOptions(rowId);
+  document.getElementById(rowId+'-ingredient-options')?.classList.add('open');
+}
+
+function toggleIngredientDropdown(rowId) {
+  const box = document.getElementById(rowId+'-ingredient-options');
+  if (!box) return;
+  if (box.classList.contains('open')) box.classList.remove('open');
+  else openIngredientDropdown(rowId);
+}
+
+function closeIngredientDropdowns(exceptRowId=null) {
+  document.querySelectorAll('.ingredient-options.open').forEach(box => {
+    if (!exceptRowId || box.id !== exceptRowId+'-ingredient-options') box.classList.remove('open');
+  });
+}
+
+function filterIngredientDropdown(rowId) {
+  openIngredientDropdown(rowId);
+  updateCustomIngredientVisibility(rowId);
+}
+
+function selectIngredient(rowId, value) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  const input = row.querySelector('.ingredient-select');
+  input.value = value;
+  updateCustomIngredientVisibility(rowId);
+  closeIngredientDropdowns();
+  const block = row.closest('.product-block');
+  if (block && !block.classList.contains('custom-percent-mode')) distributeEvenFormulaPercents(block.id);
+}
+
+function ingredientKeydown(event, rowId) {
+  const box = document.getElementById(rowId+'-ingredient-options');
+  if (event.key === 'Escape') { closeIngredientDropdowns(); return; }
+  if (event.key === 'Enter' && box?.classList.contains('open')) {
+    const active = box.querySelector('.ingredient-option.active') || box.querySelector('.ingredient-option');
+    if (active) { event.preventDefault(); active.click(); }
+  }
+}
+
+function updateCustomIngredientVisibility(rowId) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  let customInput = row.querySelector('.custom-ing');
+  const value = (row.querySelector('.ingredient-select')?.value || '').trim();
+  if (value === 'Custom') {
+    customInput.style.display = '';
+    customInput.placeholder = '';
+    if (customInput.tagName === 'SPAN') {
+      const inp = document.createElement('input');
+      inp.className = 'custom-ing'; inp.placeholder = '';
+      inp.setAttribute('data-row', rowId);
+      customInput.replaceWith(inp);
+    }
+  } else if (customInput.tagName === 'INPUT') {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
+function onIngInput(input, rowId) {
+  filterIngredientDropdown(rowId);
+}
+
+function onIngSelect(sel, rowId) {
+  // Kept for compatibility with older cached pages.
+  selectIngredient(rowId, sel.value);
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.ingredient-combobox')) closeIngredientDropdowns();
+});
+
+// Prevent mouse-wheel / trackpad scrolling from changing number inputs like Price or payment amount.
+document.addEventListener('wheel', (e) => {
+  const input = e.target.closest('input[type="number"]');
+  if (!input || document.activeElement !== input) return;
+  input.blur();
+}, { passive: true });
+
+
+function removeFormulaRow(rowId, blockId) {
+  document.getElementById(rowId)?.remove();
+  const block = document.getElementById(blockId);
+  if (block && !block.classList.contains('custom-percent-mode')) distributeEvenFormulaPercents(blockId);
+  updatePctTotal(blockId);
+}
+
+function formulaRowHasIngredient(row) {
+  const ingInput = row.querySelector('.ingredient-select');
+  const customInp = row.querySelector('.custom-ing');
+  const rawName = ingInput ? ingInput.value.trim() : '';
+  const customName = customInp && customInp.tagName === 'INPUT' ? customInp.value.trim() : '';
+  return !!(rawName && (rawName !== 'Custom' || customName));
+}
+
+function distributeEvenFormulaPercents(blockId) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const rows = [...block.querySelectorAll('.formula-row')].filter(formulaRowHasIngredient);
+  if (!rows.length) { updatePctTotal(blockId); return; }
+
+  // Store equal split percentages in the hidden fields so the backend/reporting still gets 100%.
+  // Use tenths so 3 oils becomes 33.4/33.3/33.3 instead of failing at 99.9%.
+  const totalTenths = 1000;
+  const base = Math.floor(totalTenths / rows.length);
+  const remainder = totalTenths - base * rows.length;
+
+  rows.forEach((row, idx) => {
+    const pctInput = row.querySelector('input[type=number]');
+    if (!pctInput) return;
+    const tenths = base + (idx < remainder ? 1 : 0);
+    const pct = tenths / 10;
+    pctInput.value = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+  });
+  updatePctTotal(blockId);
+}
+
+function toggleCustomPercentMode(blockId) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const isCustomMode = block.classList.toggle('custom-percent-mode');
+  const btn = block.querySelector('.custom-percent-toggle');
+  if (btn) btn.textContent = isCustomMode ? 'Use even split' : 'Custom percentages';
+  if (!isCustomMode) distributeEvenFormulaPercents(blockId);
+  else updatePctTotal(blockId);
+}
+
+function updatePctTotal(blockId) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const inputs = block.querySelectorAll('.formula-row input[type=number]');
+  let total = 0;
+  inputs.forEach(i => total += parseFloat(i.value)||0);
+  total = Math.round(total*10)/10;
+  const el = block.querySelector('.pct-total');
+  if (!el) return;
+  el.textContent = total + '% / 100%';
+  el.className = 'pct-total ' + (total===100?'pct-ok':total>100?'pct-bad':'pct-mid');
+}
+
+function getFormulaFromBlock(blockId) {
+  const block = document.getElementById(blockId);
+  if (block && !block.classList.contains('custom-percent-mode')) distributeEvenFormulaPercents(blockId);
+  const rows = block.querySelectorAll('.formula-row');
+  const result = [];
+  for (const row of rows) {
+    const ingInput = row.querySelector('.ingredient-select');
+    const customInp = row.querySelector('.custom-ing');
+    const pctInp = row.querySelector('input[type=number]');
+    const rawName = ingInput ? ingInput.value.trim() : '';
+    if (rawName && rawName !== 'Custom' && !INGREDIENTS.includes(rawName)) {
+      throw new Error(`Ingredient "${rawName}" is not in the ingredient list — choose it from the dropdown or select Custom.`);
+    }
+    let name = rawName === 'Custom'
+      ? (customInp ? customInp.value.trim() : '')
+      : rawName;
+    const pctRaw = pctInp ? pctInp.value.trim() : '';
+    const pct = parseFloat(pctRaw);
+    // Skip completely empty rows (no ingredient selected AND no %)
+    if (!name && (pctRaw === '' || isNaN(pct))) continue;
+    // Has a name but no %
+    if (name && (pctRaw === '' || isNaN(pct) || pct <= 0)) {
+      throw new Error(`Ingredient "${name}" is missing a percentage — enter a value above 0 or remove it.`);
+    }
+    // Has a % but no name
+    if (!name && pct > 0) {
+      throw new Error(`An ingredient row has ${pct}% but no ingredient selected — select one or remove the row.`);
+    }
+    result.push({name, pct});
+  }
+  return result;
+}
+
+// ── PRODUCT BLOCK ─────────────────────────────────────────────────────────────
+function isEvenSplitFormula(formula) {
+  if (!Array.isArray(formula) || formula.length <= 1) return true;
+  const nums = formula.map(f => Number(f.pct)).filter(n => !isNaN(n));
+  if (nums.length !== formula.length) return true;
+  return Math.max(...nums) - Math.min(...nums) <= 0.11;
+}
+
+let productCount = 0;
+
+function renumberProductBlocks(container='products-container') {
+  const containerEl = document.getElementById(container);
+  if (!containerEl) return;
+  const blocks = [...containerEl.querySelectorAll('.product-block')];
+  blocks.forEach((block, idx) => {
+    const label = block.querySelector('.product-number-label, .product-block-title');
+    if (label) label.textContent = `Product ${idx + 1}`;
+  });
+}
+
+function renumberAllProductBlocks() {
+  renumberProductBlocks('products-container');
+  renumberProductBlocks('edit-products-container');
+}
+
+function removeProductBlock(blockId) {
+  const block = document.getElementById(blockId);
+  const containerId = block?.parentElement?.id || 'products-container';
+  block?.remove();
+  renumberProductBlocks(containerId);
+  updateAllPaymentTotals();
+}
+
+function addProductBlock(prod={}, container='products-container') {
+  productCount++;
+  const blockId = 'pb-'+productCount;
+  const isCustomType = prod.product_type && !PRODUCT_TYPES.includes(prod.product_type);
+  const selVal = isCustomType ? 'Custom' : (prod.product_type || '');
+  const isCustomSel = selVal === 'Custom';
+  const isOil500ml = selVal === 'Oil 500ml';
+  const hasFormula = prod.formula && prod.formula.length > 0;
+  const useCustomPercentMode = hasFormula && !isEvenSplitFormula(prod.formula);
+  const canPrintSavedProduct = container === 'edit-products-container' && prod.id && selVal !== 'Custom';
+
+  const div = document.createElement('div');
+  div.className = 'product-block' + (useCustomPercentMode ? ' custom-percent-mode' : ''); div.id = blockId;
+  div.innerHTML = `
+    <div class="product-block-header">
+      <span class="product-block-title product-number-label">Product ${productCount}</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${canPrintSavedProduct ? `<button type="button" class="btn btn-xs btn-green" onclick="printEditedProductLabel(${prod.id})">Print this label</button>` : ''}
+        <button class="btn btn-xs btn-danger" onclick="removeProductBlock('${blockId}')">Remove</button>
+      </div>
+    </div>
+    <div class="product-fields-grid" style="margin-bottom:.75rem;">
+      <div>
+        <label>Product type *</label>
+        <select id="${blockId}-type" onchange="onTypeChange('${blockId}')">
+          <option value=""${!selVal?' selected':''}></option>
+          ${PRODUCT_TYPES.map(t=>`<option value="${t}"${selVal===t?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div id="${blockId}-customname-wrap" style="display:${isCustomSel?'block':'none'};">
+        <label>Custom product type *</label>
+        <input id="${blockId}-customname" placeholder="" value="${prod.custom_product_name||''}" />
+      </div>
+      <div>
+        <label>Name on product *</label>
+        <input id="${blockId}-productlabel" placeholder="" value="${prod.product_label||''}" />
+        <button type="button" class="btn btn-xs" style="margin-top:5px;" onclick="fillProductLabelFromCustomer('${blockId}')">Use customer name</button>
+      </div>
+      <div>
+        <label id="${blockId}-price-tier-label">${isOil500ml ? 'Tier *' : 'Price ($) *'}</label>
+        <div class="price-percent-wrap">
+          <input id="${blockId}-price" type="${isOil500ml ? 'text' : 'number'}" min="0" step="0.01" placeholder="" value="${isOil500ml ? (prod.tier || '') : (prod.price === 0 || prod.price ? prod.price : '')}" oninput="updateAllPaymentTotals()" />
+        </div>
+      </div>
+      <div id="${blockId}-essence-wrap" class="essence-no-field" style="display:${isOil500ml?'block':'none'};">
+        <label>Essence NO. *</label>
+        <input id="${blockId}-essence" placeholder="" value="${prod.essence_no||''}" />
+      </div>
+      <div class="custom-percent-field">
+        <button type="button" class="btn btn-xs custom-percent-toggle" onclick="toggleCustomPercentMode('${blockId}')">${useCustomPercentMode ? 'Use even split' : 'Custom percentages'}</button>
+      </div>
+    </div>
+    <div id="${blockId}-formula-section">
+      <label style="margin-bottom:6px;">Ingredients <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">— even split by default</span></label>
+      <div id="${blockId}-formula-rows">
+        ${(prod.formula && prod.formula.length ? prod.formula : [{name:'',pct: selVal !== 'Custom' ? 100 : ''}]).map(ing=>makeFormulaRow(blockId, ing)).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap;">
+        <button class="btn btn-xs" onclick="addFormulaRow('${blockId}')">+ ingredient</button>
+        
+        <span class="pct-total pct-mid" id="${blockId}-pct-label">0% / 100%</span>
+      </div>
+    </div>
+  `;
+  document.getElementById(container).appendChild(div);
+  renumberProductBlocks(container);
+  if (!useCustomPercentMode) distributeEvenFormulaPercents(blockId);
+  updatePctTotal(blockId);
+  updateAllPaymentTotals();
+}
+
+function onTypeChange(blockId) {
+  const sel = document.getElementById(blockId+'-type');
+  const isCustom = sel.value === 'Custom';
+  const isOil500ml = sel.value === 'Oil 500ml';
+  document.getElementById(blockId+'-customname-wrap').style.display = isCustom?'block':'none';
+  const essenceWrap = document.getElementById(blockId+'-essence-wrap');
+  if (essenceWrap) essenceWrap.style.display = isOil500ml ? 'block' : 'none';
+  const priceInput = document.getElementById(blockId+'-price');
+  const priceTierLabel = document.getElementById(blockId+'-price-tier-label');
+  if (priceTierLabel) priceTierLabel.textContent = isOil500ml ? 'Tier *' : 'Price ($) *';
+  if (priceInput) { priceInput.type = isOil500ml ? 'text' : 'number'; priceInput.value = ''; }
+  updateAllPaymentTotals();
+}
+
+function fillProductLabelFromCustomer(blockId) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const productContainer = block.closest('#edit-products-container, #products-container');
+  const customerInputId = productContainer && productContainer.id === 'edit-products-container' ? 'edit-customer' : 'new-customer';
+  const customerName = (document.getElementById(customerInputId)?.value || '').trim();
+  const labelInput = document.getElementById(blockId+'-productlabel');
+  if (labelInput) labelInput.value = customerName;
+}
+
+function addFormulaRow(blockId) {
+  document.getElementById(blockId+'-formula-rows').insertAdjacentHTML('beforeend', makeFormulaRow(blockId));
+  const block = document.getElementById(blockId);
+  if (block && !block.classList.contains('custom-percent-mode')) distributeEvenFormulaPercents(blockId);
+}
+
+function getProductsFromContainer(containerId='products-container') {
+  const blocks = document.getElementById(containerId).querySelectorAll('.product-block');
+  // Clear previous error highlights
+  blocks.forEach(b => b.classList.remove('has-error'));
+  const products = [];
+  for (const block of blocks) {
+    const blockId = block.id;
+    const typeEl = document.getElementById(blockId+'-type');
+    const customNameEl = document.getElementById(blockId+'-customname');
+    const productLabelEl = document.getElementById(blockId+'-productlabel');
+    const essenceEl = document.getElementById(blockId+'-essence');
+    const priceEl = document.getElementById(blockId+'-price');
+    const type = typeEl.value;
+    const custom_product_name = customNameEl ? customNameEl.value.trim() : '';
+    const product_label = productLabelEl ? productLabelEl.value.trim() : '';
+    const essence_no = essenceEl ? essenceEl.value.trim() : '';
+    const tier = type === 'Oil 500ml' ? (priceEl ? priceEl.value.trim() : '') : '';
+    const priceRaw = type === 'Oil 500ml' ? '0' : priceEl.value.trim();
+    const price = parseFloat(priceRaw);
+
+    if (!type) continue;
+    if (priceRaw === '' || isNaN(price)) {
+      throw new Error(`Enter a price for "${type === 'Custom' ? custom_product_name || 'Custom product' : type}" (use 0 if free).`);
+    }
+    if (!product_label) {
+      throw new Error(`Enter a Name on Product for "${type === 'Custom' ? custom_product_name || 'Custom product' : type}".`);
+    }
+    if (type === 'Custom' && !custom_product_name) {
+      throw new Error('Enter a name for the Custom product.');
+    }
+    if (type === 'Oil 500ml' && !essence_no) {
+      throw new Error('Enter the Essence NO. for Oil 500ml.');
+    }
+    if (type === 'Oil 500ml' && !tier) {
+      throw new Error('Enter the Tier for Oil 500ml.');
+    }
+
+    const label = type === 'Custom' ? (custom_product_name || 'Custom product') : type;
+    let formula;
+    try { formula = getFormulaFromBlock(blockId); } catch(e) { throw e; }
+    if (!formula.length) {
+      throw new Error(`"${label}" has no ingredients — add at least one ingredient with a percentage.`);
+    }
+    // Sum with full float precision then round to 1 decimal
+    let pctTotal = 0;
+    for (const f of formula) pctTotal += f.pct;
+    pctTotal = Math.round(pctTotal * 10) / 10;
+    if (pctTotal !== 100) {
+      block.classList.add('has-error');
+      throw new Error(`"${label}" ingredients add to ${pctTotal}% — they must total exactly 100% before saving.`);
+    }
+    block.classList.remove('has-error');
+    products.push({ product_type: type, custom_product_name, product_label, essence_no, tier, price, formula });
+  }
+  return products;
+}
+
+
+// ── PAYMENT BUILDER ──────────────────────────────────────────────────────────
+let paymentCount = 0;
+
+function getSaleTotal(productContainerId='products-container') {
+  const container = document.getElementById(productContainerId);
+  if (!container) return 0;
+  let total = 0;
+  container.querySelectorAll('.product-block').forEach(block => {
+    const blockId = block.id;
+    const type = document.getElementById(blockId+'-type')?.value || '';
+
+    // Oil 500ml uses this box for Tier, not Price.
+    // Do not count tier numbers in the sale/payment total.
+    if (type === 'Oil 500ml') return;
+
+    const priceEl = block.querySelector('input[id$="-price"]');
+    total += parseFloat(priceEl?.value || 0) || 0;
+  });
+  return Math.round(total * 100) / 100;
+}
+
+function paymentDisplayName(p) {
+  if (!p) return '';
+  return p.method === 'Custom' && p.custom_method ? p.custom_method : p.method;
+}
+
+function paymentText(payments) {
+  if (!payments || !payments.length) return '—';
+  if (payments.length === 1) return paymentDisplayName(payments[0]);
+  return payments.map(p => `${paymentDisplayName(p)}: ${fmt$(p.amount || 0)}`).join(' + ');
+}
+
+function makePaymentRow(paymentContainerId, productContainerId, pay={method:'', custom_method:'', amount:''}) {
+  const rowId = 'pay-' + Date.now() + Math.random().toString(36).slice(2);
+  const isCustom = pay.method === 'Custom' || (pay.method && !PAYMENT_METHODS.includes(pay.method));
+  const selVal = isCustom ? 'Custom' : (pay.method || '');
+  const customValue = isCustom ? (pay.custom_method || pay.method || '') : (pay.custom_method || '');
+  return `
+  <div class="formula-row payment-row" id="${rowId}">
+    <div class="payment-method-field">
+      <label>Payment Type</label>
+      <select onchange="onPaymentMethodSelect(this,'${rowId}')">
+        <option value=""${!selVal?' selected':''}></option>
+        ${PAYMENT_METHODS.map(m=>`<option value="${m}"${selVal===m?' selected':''}>${m}</option>`).join('')}
+      </select>
+    </div>
+    ${isCustom ? `<div class="payment-custom-field"><label>Custom</label><input class="custom-pay" placeholder="" value="${customValue === 'Custom' ? '' : customValue}" /></div>` : `<span class="custom-pay" style="display:none;"></span>`}
+    <div class="payment-total-field">
+      <label>Total</label>
+      <input class="pay-amount" type="number" min="0" step="0.01" placeholder="" value="${pay.amount ?? ''}" oninput="updatePaymentTotal('${paymentContainerId}','${productContainerId}')" />
+    </div>
+    <button class="btn btn-xs btn-danger payment-delete-btn" onclick="removePaymentRow('${rowId}','${paymentContainerId}','${productContainerId}')">✕</button>
+  </div>`;
+}
+
+function onPaymentMethodSelect(sel, rowId) {
+  const row = document.getElementById(rowId);
+  let custom = row.querySelector('.custom-pay');
+  if (sel.value === 'Custom') {
+    if (custom.tagName === 'SPAN') {
+      const inp = document.createElement('input');
+      inp.className = 'custom-pay';
+      inp.placeholder = '';
+      custom.replaceWith(inp);
+    } else {
+      custom.style.display = '';
+    }
+  } else if (custom.tagName === 'INPUT') {
+    custom.value = '';
+    custom.style.display = 'none';
+  }
+}
+
+function addPaymentRow(paymentContainerId='payments-container', productContainerId='products-container', pay={method:'', custom_method:'', amount:''}) {
+  paymentCount++;
+  const container = document.getElementById(paymentContainerId);
+  if (!container) return;
+  container.insertAdjacentHTML('beforeend', makePaymentRow(paymentContainerId, productContainerId, pay));
+  updatePaymentTotal(paymentContainerId, productContainerId);
+}
+
+function removePaymentRow(rowId, paymentContainerId='payments-container', productContainerId='products-container') {
+  document.getElementById(rowId)?.remove();
+  updatePaymentTotal(paymentContainerId, productContainerId);
+}
+
+function fillPaymentTotal(paymentContainerId='payments-container', productContainerId='products-container') {
+  const container = document.getElementById(paymentContainerId);
+  if (!container) return;
+
+  const totalDue = getSaleTotal(productContainerId);
+  const rows = [...container.querySelectorAll('.payment-row')];
+
+  // Do not reset payment method. If there are no rows, create one blank row.
+  if (!rows.length) {
+    addPaymentRow(paymentContainerId, productContainerId, {method:'', amount:totalDue});
+    updatePaymentTotal(paymentContainerId, productContainerId);
+    return;
+  }
+
+  // If there is one row, just set that row's amount to the sale total.
+  if (rows.length === 1) {
+    const amountInput = rows[0].querySelector('.pay-amount');
+    if (amountInput) amountInput.value = totalDue.toFixed(2);
+    updatePaymentTotal(paymentContainerId, productContainerId);
+    return;
+  }
+
+  // For split payments, fill the first blank amount with the remaining balance.
+  let currentPaid = 0;
+  rows.forEach(row => {
+    const amountInput = row.querySelector('.pay-amount');
+    currentPaid += parseFloat(amountInput?.value || 0) || 0;
+  });
+  const remaining = Math.round((totalDue - currentPaid) * 100) / 100;
+  const blankRow = rows.find(row => {
+    const amountInput = row.querySelector('.pay-amount');
+    return amountInput && amountInput.value.trim() === '';
+  });
+  if (blankRow) {
+    blankRow.querySelector('.pay-amount').value = Math.max(0, remaining).toFixed(2);
+  } else {
+    rows[rows.length - 1].querySelector('.pay-amount').value = Math.max(0, remaining + (parseFloat(rows[rows.length - 1].querySelector('.pay-amount')?.value || 0) || 0)).toFixed(2);
+  }
+  updatePaymentTotal(paymentContainerId, productContainerId);
+}
+
+function updatePaymentTotal(paymentContainerId='payments-container', productContainerId='products-container') {
+  const container = document.getElementById(paymentContainerId);
+  if (!container) return;
+  const totalDue = getSaleTotal(productContainerId);
+  let paid = 0;
+  let hasTypedPaymentAmount = false;
+  container.querySelectorAll('.pay-amount').forEach(i => {
+    const raw = (i.value || '').trim();
+    if (raw !== '') hasTypedPaymentAmount = true;
+    paid += parseFloat(raw || 0) || 0;
+  });
+  paid = Math.round(paid * 100) / 100;
+  const labelId = paymentContainerId === 'edit-payments-container' ? 'edit-payments-total-label' : 'payments-total-label';
+  const el = document.getElementById(labelId);
+  if (!el) return;
+  el.textContent = `${fmt$(paid)} / ${fmt$(totalDue)}`;
+  el.className = 'pct-total ' + (paid === totalDue && hasTypedPaymentAmount ? 'pct-ok' : paid > totalDue ? 'pct-bad' : 'pct-mid');
+}
+
+function updateAllPaymentTotals() {
+  updatePaymentTotal('payments-container','products-container');
+  updatePaymentTotal('edit-payments-container','edit-products-container');
+}
+
+function getPaymentsFromContainer(paymentContainerId='payments-container', productContainerId='products-container') {
+  const container = document.getElementById(paymentContainerId);
+  const rows = container ? container.querySelectorAll('.payment-row') : [];
+  const payments = [];
+  let paid = 0;
+  for (const row of rows) {
+    const method = row.querySelector('select')?.value || '';
+    const customEl = row.querySelector('.custom-pay');
+    const custom_method = customEl && customEl.tagName === 'INPUT' ? customEl.value.trim() : '';
+    const amountRaw = row.querySelector('.pay-amount')?.value.trim() || '';
+    const amount = parseFloat(amountRaw);
+    if (!method && amountRaw === '') continue;
+    if (!method) throw new Error('Select a payment method or remove the empty payment row.');
+    if (method === 'Custom' && !custom_method) throw new Error('Enter a name for the custom payment method.');
+    if (amountRaw === '' || isNaN(amount)) throw new Error(`Enter an amount for ${method === 'Custom' ? custom_method || 'Custom payment' : method}.`);
+    if (amount < 0) throw new Error(`Payment amount for ${method === 'Custom' ? custom_method || 'Custom payment' : method} cannot be negative.`);
+    payments.push({method, custom_method, amount: Math.round(amount * 100) / 100});
+    paid += amount;
+  }
+  if (!payments.length) throw new Error('Add at least one payment method.');
+  paid = Math.round(paid * 100) / 100;
+  const totalDue = getSaleTotal(productContainerId);
+  if (paid !== totalDue) {
+    throw new Error(`Payment total is ${fmt$(paid)}, but sale total is ${fmt$(totalDue)}. Add split payments until they match.`);
+  }
+  return payments;
+}
+
+// ── SUBMIT SALE ──────────────────────────────────────────────────────────────
+async function submitSale() {
+  const customer = document.getElementById('new-customer').value.trim();
+  const sale_date = document.getElementById('new-date').value;
+  const notes = document.getElementById('new-notes').value.trim();
+  const errEl = document.getElementById('save-err');
+  errEl.style.display = 'none';
+
+  if (!customer) { showErr('Customer name required.'); return; }
+  if (!sale_date) { showErr('Date required.'); return; }
+
+  let products, payments;
+  try {
+    products = getProductsFromContainer();
+    payments = getPaymentsFromContainer('payments-container','products-container');
+  } catch(e) { showErr(e.message); return; }
+  if (!products.length) { showErr('Add at least one product.'); return; }
+
+  let res;
+  try {
+    res = await api('/api/sales','POST',{ customer, sale_date, notes, products, payments });
+    if (res.error) { showErr(res.error); return; }
+  } catch(e) { showErr('Could not save. Check the app window for errors.'); return; }
+  clearErr();
+  toast(`Sale saved! ${res.labels_added || 0} label(s) added to queue.`);
+  resetForm();
+  if (IS_ADMIN) loadDash();
+  renderRecent();
+}
+
+function showErr(msg) {
+  const el = document.getElementById('save-err');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'inline';
+  el.style.fontWeight = 'bold';
+  // No auto-hide — stays visible until the user fixes the issue and saves successfully
+}
+function clearErr() {
+  const el = document.getElementById('save-err');
+  if (el) { el.style.display = 'none'; el.textContent = ''; }
+}
+
+function resetForm() {
+  document.getElementById('new-customer').value='';
+  document.getElementById('new-date').value=today();
+  document.getElementById('new-notes').value='';
+  document.getElementById('products-container').innerHTML='';
+  document.getElementById('payments-container').innerHTML='';
+  productCount=0;
+  addProductBlock();
+  addPaymentRow('payments-container','products-container',{method:'', amount:''});
+  updateAllPaymentTotals();
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+async function loadDash() {
+  const s = await api('/api/stats');
+  document.getElementById('d-count').textContent = s.today_products;
+  const revEl = document.getElementById('d-rev');
+  if (revEl) revEl.textContent = fmt$(s.today_revenue);
+}
+
+async function renderRecent() {
+  const el = document.getElementById('recent-list');
+  if (!el) return;
+
+  // Admin sees the latest sales overall.
+  // Employees see only today's sales in the New Sale tab.
+  const data = IS_ADMIN ? await api('/api/sales?page=1') : await api('/api/sales/today');
+
+  if (data.error) {
+    el.innerHTML = `<div class="empty">${data.error}</div>`;
+    return;
+  }
+
+  const sales = (Array.isArray(data) ? data : (data.sales || [])).slice(0, 8);
+  if (!sales.length) {
+    el.innerHTML = '<div class="empty">No sales yet today.</div>';
+    return;
+  }
+  el.innerHTML = sales.map(s=>renderSaleCard(s, true, false)).join('');
+}
+
+async function renderTodaySales() {
+  const el = document.getElementById('today-sales-list');
+  if (!el) return;
+  const data = await api('/api/sales/today');
+  if (data.error) {
+    el.innerHTML = `<div class="empty">${data.error}</div>`;
+    return;
+  }
+  const sales = Array.isArray(data) ? data : (data.sales || []);
+  if (!sales.length) {
+    el.innerHTML = '<div class="empty">No sales entered today.</div>';
+    return;
+  }
+  el.innerHTML = sales.map(s=>renderSaleCard(s, true, false)).join('');
+}
+
+// ── SALE CARD ─────────────────────────────────────────────────────────────────
+function productTypeText(p) {
+  if (!p) return '';
+  if (p.product_type === 'Custom') {
+    return p.custom_product_name ? `Custom: "${p.custom_product_name}"` : 'Custom';
+  }
+  return p.product_type || '';
+}
+
+function formulaText(f) {
+  if (!f || !f.length) return '';
+  return f.map(x=>`${x.pct}% ${x.name}`).join(' + ');
+}
+
+function renderSaleCard(s, showEdit=true, showAmount=true) {
+  const total = s.products.reduce((a,p)=>a+p.price,0);
+  const amountHtml = showAmount ? `<span class="amt">${fmt$(total)}</span>` : '';
+  return `
+  <div class="sale-row">
+    <div class="sale-row-header" onclick="toggleSaleRow(this)">
+      <div>
+        <strong>${s.customer}</strong>
+        <span class="muted" style="margin-left:.5rem;">${fmtDate(s.sale_date)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${amountHtml}
+        <span class="tag tag-blue">${s.products.length} product${s.products.length>1?'s':''}</span>
+        <button type="button" class="btn btn-xs btn-green" data-sale-id="${s.id}" data-customer="${escapeAttr(s.customer)}" onclick="return handleSalePrintButtonClick(event, this)">Print labels</button>
+        ${showEdit?`<button class="btn btn-xs" onclick="event.stopPropagation();openEdit(${s.id})">Edit</button>`:''}
+      </div>
+    </div>
+    <div class="sale-row-body">
+      <table style="margin-bottom:${s.notes?'.5rem':'0'};">
+        <thead><tr><th>Product</th><th>Formula</th><th>Price</th></tr></thead>
+        <tbody>
+          ${s.products.map(p=>`<tr>
+            <td><span class="tag tag-amber">${productTypeText(p)}</span>${p.product_label?`<div class="muted" style="margin-top:3px;">Name on product: ${p.product_label}</div>`:''}</td>
+            <td><span class="formula-text">${formulaText(p.formula)||'—'}</span></td>
+            <td class="amt">${fmt$(p.price)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="muted"><strong>Payment:</strong> ${paymentText(s.payments)}</div>
+      ${s.notes?`<div class="muted">Note: ${s.notes}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function toggleSaleRow(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+
+// ── LABEL QUEUE ──────────────────────────────────────────────────────────────
+function labelStatusTag(status) {
+  const text = status || 'not_printed';
+  if (text === 'printed') return `<span class="tag tag-blue">printed</span>`;
+  if (text === 'printing') return `<span class="tag tag-amber">printing</span>`;
+  if (text === 'simulated') return `<span class="tag tag-amber">simulated</span>`;
+  if (text === 'error') return `<span class="tag" style="border-color:var(--red);color:var(--red);background:var(--red-bg);">error</span>`;
+  return `<span class="tag">not printed</span>`;
+}
+
+async function renderLabels() {
+  const status = document.getElementById('label-status-filter')?.value ?? 'not_printed';
+  const data = await api('/api/labels' + (status ? `?status=${encodeURIComponent(status)}` : ''));
+  const el = document.getElementById('labels-list');
+  if (!el) return;
+  if (!data.length) { el.innerHTML = '<div class="empty">No labels in this view.</div>'; return; }
+  el.innerHTML = `
+    <table>
+      <thead><tr><th>Status</th><th>Customer</th><th>Product</th><th>Name on Product</th><th>Ingredients</th><th>Essence NO.</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${data.map(l=>`
+          <tr>
+            <td>${labelStatusTag(l.status)}</td>
+            <td>${l.customer_name || ''}</td>
+            <td><span class="tag tag-amber">${l.product_name || l.product_type || ''}</span></td>
+            <td>${l.name_on_product || ''}</td>
+            <td><span class="formula-text">${l.ingredients_text || '—'}</span>${l.error?`<div style="color:var(--red);margin-top:4px;">${l.error}</div>`:''}</td>
+            <td>${l.essence_no || ''}</td>
+            <td style="white-space:nowrap;">
+              ${['printed','printing'].includes(l.status) ? '' : `<button class="btn btn-xs btn-green" onclick="printLabel(${l.id})">Print</button>`}
+              ${['printed','printing'].includes(l.status) ? '' : `<button class="btn btn-xs" onclick="resetLabel(${l.id})">Reset</button>`}
+              ${['printed','printing'].includes(l.status) ? '' : `<button class="btn btn-xs btn-danger" onclick="deleteLabel(${l.id})">Delete</button>`}
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function printLabel(labelId) {
+  if (printRequestInProgress) { toast('A label is already printing. Wait for it to finish.', 3500); return; }
+  printRequestInProgress = true;
+  try {
+    const res = await api(`/api/labels/${labelId}/print`, 'POST', {});
+    if (res.error) toast('Label error: ' + res.error, 5000);
+    else toast(res.status === 'simulated' ? 'Simulated label print created.' : 'Label printed.');
+    renderLabels();
+  } finally {
+    printRequestInProgress = false;
+  }
+}
+
+function confirmPrintSaleLabels(saleId, customerName='this sale') {
+  const name = String(customerName || 'this sale').trim() || 'this sale';
+  if (!confirm(`Are you sure you want to print labels for ${name}?`)) return;
+  printSaleLabels(saleId);
+}
+
+function handleSalePrintButtonClick(event, button) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  // Keep the sale details closed when using the Print labels button.
+  const header = button?.closest('.sale-row-header');
+  const body = header?.nextElementSibling;
+  if (header) header.classList.remove('open');
+  if (body) body.classList.remove('open');
+
+  const saleId = Number(button?.dataset?.saleId || 0);
+  if (!saleId) {
+    toast('Print error: sale ID missing.', 5000);
+    return false;
+  }
+
+  confirmPrintSaleLabels(saleId, button?.dataset?.customer || 'this sale');
+  return false;
+}
+
+async function printSaleLabels(saleId) {
+  if (printRequestInProgress) { toast('A label is already printing. Wait for it to finish.', 3500); return; }
+  printRequestInProgress = true;
+  try {
+    const res = await api(`/api/sales/${saleId}/labels/print`, 'POST', {});
+    if (res.error) { toast('Label error: ' + res.error, 5000); return; }
+    const count = (res.results || []).length;
+    const failed = (res.results || []).filter(r=>!r.ok).length;
+    toast(failed ? `${count-failed}/${count} labels printed, ${failed} failed.` : `${count} label(s) sent.`);
+    const activePage = document.querySelector('.page.visible').id;
+    if (activePage === 'page-labels') renderLabels();
+  } catch (err) {
+    toast('Print error: could not contact tracker. Check the black app window.', 5000);
+  } finally {
+    printRequestInProgress = false;
+  }
+}
+
+async function printAllLabels() {
+  if (printRequestInProgress) { toast('A label is already printing. Wait for it to finish.', 3500); return; }
+  if (!confirm('Print all currently unprinted/error labels?')) return;
+  printRequestInProgress = true;
+  try {
+    const res = await api('/api/labels/print-unprinted', 'POST', {});
+    const count = (res.results || []).length;
+    const failed = (res.results || []).filter(r=>!r.ok).length;
+    toast(failed ? `${count-failed}/${count} labels printed, ${failed} failed.` : `${count} label(s) sent.`);
+    renderLabels();
+  } finally {
+    printRequestInProgress = false;
+  }
+}
+
+async function resetLabel(labelId) {
+  await api(`/api/labels/${labelId}/reset`, 'POST', {});
+  toast('Label reset to not printed.');
+  renderLabels();
+}
+
+async function deleteLabel(labelId) {
+  if (!confirm('Delete this label from the queue? This will not delete the sale.')) return;
+  const res = await api(`/api/labels/${labelId}`, 'DELETE', {});
+  if (res.error) toast('Delete error: ' + res.error, 5000);
+  else toast('Label removed from queue.');
+  renderLabels();
+}
+
+// ── HISTORY ──────────────────────────────────────────────────────────────────
+let histPage = 1;
+let histTotalPages = 1;
+
+async function renderHistory(reset=true) {
+  if (reset) histPage = 1;
+  const q = document.getElementById('hist-search').value;
+  const sort = document.getElementById('hist-sort').value;
+  let url = q
+    ? `/api/sales?search=${encodeURIComponent(q)}`
+    : `/api/sales?page=${histPage}`;
+  let sales, totalPages = 1;
+  const raw = await api(url);
+  if (Array.isArray(raw)) {
+    // filtered result (search) — comes back as flat array
+    sales = raw;
+    if (sort === 'date-asc') sales = [...sales].reverse();
+  } else {
+    // paginated result
+    sales = raw.sales || [];
+    totalPages = raw.pages || 1;
+    histTotalPages = totalPages;
+    if (sort === 'date-asc') sales = [...sales].reverse();
+  }
+  const el = document.getElementById('history-list');
+  if (!sales.length && histPage === 1) { el.innerHTML='<div class="empty">No sales found.</div>'; return; }
+  const cards = sales.map(s=>renderSaleCard(s)).join('');
+  if (histPage === 1) {
+    el.innerHTML = cards;
+  } else {
+    el.insertAdjacentHTML('beforeend', cards);
+  }
+  // Remove old load-more button if present
+  const oldBtn = document.getElementById('hist-load-more');
+  if (oldBtn) oldBtn.remove();
+  if (!q && histPage < histTotalPages) {
+    el.insertAdjacentHTML('beforeend',
+      `<div id="hist-load-more" style="text-align:center;padding:1rem;">
+        <button class="btn" onclick="loadMoreHistory()">Load more (page ${histPage+1} of ${histTotalPages})</button>
+      </div>`);
+  }
+}
+
+async function loadMoreHistory() {
+  histPage++;
+  await renderHistory(false);
+}
+
+// ── BY DAY ────────────────────────────────────────────────────────────────────
+function onDayFilterModeChange() {
+  const mode = document.getElementById('day-filter-mode').value;
+  document.getElementById('day-filter-month').style.display = mode === 'month' ? '' : 'none';
+  document.getElementById('day-filter-day').style.display = mode === 'day' ? '' : 'none';
+  document.getElementById('day-filter-year').style.display = mode === 'year' ? '' : 'none';
+  renderDays();
+}
+
+async function renderDays() {
+  const mode = document.getElementById('day-filter-mode').value;
+  let url = '/api/sales';
+  if (mode === 'day') {
+    const d = document.getElementById('day-filter-day').value;
+    if (d) url = '/api/sales?date=' + d;
+  } else if (mode === 'month') {
+    const m = document.getElementById('day-filter-month').value;
+    if (m) url = '/api/sales?month=' + m;
+  } else if (mode === 'year') {
+    const y = document.getElementById('day-filter-year').value;
+    if (y) url = '/api/sales?year=' + y;
+  }
+  const sales = await api(url);
+
+  const byDay = {};
+  for (const s of sales) {
+    if (!byDay[s.sale_date]) byDay[s.sale_date] = [];
+    byDay[s.sale_date].push(s);
+  }
+
+  const el = document.getElementById('days-list');
+  const days = Object.keys(byDay).sort().reverse();
+  if (!days.length) { el.innerHTML='<div class="empty">No sales for this period.</div>'; return; }
+
+  el.innerHTML = days.map(d => {
+    const daySales = byDay[d];
+    const dayRev = daySales.reduce((a,s)=>a+s.products.reduce((b,p)=>b+p.price,0),0);
+    return `<div class="day-group">
+      <div class="day-header">
+        <span class="day-title">${fmtDate(d)}</span>
+        <span class="day-meta">${daySales.length} sale${daySales.length>1?'s':''} &nbsp;·&nbsp; <span class="amt">${fmt$(dayRev)}</span></span>
+      </div>
+      ${daySales.map(s=>renderSaleCard(s)).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ── REPORTS ──────────────────────────────────────────────────────────────────
+async function renderReports() {
+  const data = await api('/api/reports');
+  const fmt = ([n,d]) => `<tr><td>${n}</td><td class="mono muted">${d.count||d}</td><td class="amt">${fmt$(d.rev||d)}</td></tr>`;
+  document.getElementById('rpt-prod').innerHTML = data.top_products.length
+    ? data.top_products.map(r=>`<tr><td>${r.name}</td><td class="mono muted">${r.count}</td><td class="amt">${fmt$(r.rev)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty">No data</td></tr>';
+  document.getElementById('rpt-cust').innerHTML = data.top_customers.length
+    ? data.top_customers.map(r=>`<tr><td>${r.name}</td><td class="mono muted">${r.count}</td><td class="amt">${fmt$(r.rev)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty">No data</td></tr>';
+  document.getElementById('rpt-ing').innerHTML = data.top_ingredients.length
+    ? data.top_ingredients.map(r=>`<tr><td>${r.name}</td><td class="mono muted">${r.count}</td><td class="amt">${fmt$(r.rev)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty">No ingredient data yet — add formulas when logging sales.</td></tr>';
+}
+
+// ── EDIT ─────────────────────────────────────────────────────────────────────
+async function openEdit(saleId) {
+  editingSaleId = saleId;
+  const s = await api('/api/sales/'+saleId);
+  const body = document.getElementById('modal-body');
+  body.innerHTML = `
+    <div class="grid3" style="margin-bottom:1rem;">
+      <div><label>Customer name</label><input id="edit-customer" value="${s.customer}" /></div>
+      <div><label>Date</label><input id="edit-date" type="date" value="${s.sale_date}" /></div>
+      <div><label>Notes</label><input id="edit-notes" value="${s.notes||''}" /></div>
+    </div>
+    <div class="section-label">Products</div>
+    <div id="edit-products-container"></div>
+    <button class="btn btn-sm" onclick="addProductBlock({},'edit-products-container')" style="margin-bottom:.75rem;">+ Add product</button>
+
+    <div class="section-label emphasis-label">Payment</div>
+    <div id="edit-payment-section" style="margin-bottom:1rem;">
+      <div id="edit-payments-container"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap;">
+        <button class="btn btn-xs" onclick="addPaymentRow('edit-payments-container','edit-products-container')">+ payment method</button>
+        <button class="btn btn-xs" onclick="fillPaymentTotal('edit-payments-container','edit-products-container')">Fill sale total</button>
+        <span class="pct-total pct-mid" id="edit-payments-total-label">$0.00 / $0.00</span>
+      </div>
+    </div>
+  `;
+  for (const p of s.products) addProductBlock(p,'edit-products-container');
+  const editTotal = getSaleTotal('edit-products-container');
+  const existingPayments = s.payments && s.payments.length ? s.payments : [{method:'', amount:editTotal}];
+  for (const pay of existingPayments) addPaymentRow('edit-payments-container','edit-products-container', pay);
+  updateAllPaymentTotals();
+  if (!IS_ADMIN) {
+    document.querySelectorAll('#edit-modal [data-admin-only="true"]').forEach(el => el.style.display = 'none');
+  }
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function showEditErr(msg) {
+  const el = document.getElementById('edit-err');
+  if (!el) return;
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'inline';
+  el.style.fontWeight = 'bold';
+}
+function clearEditErr() {
+  const el = document.getElementById('edit-err');
+  if (el) { el.style.display = 'none'; el.textContent = ''; }
+}
+
+async function printEditedProductLabel(productId) {
+  if (!editingSaleId || !productId) return;
+  if (printRequestInProgress) { toast('A label is already printing. Wait for it to finish.', 3500); return; }
+  printRequestInProgress = true;
+  try {
+    const res = await api(`/api/sales/${editingSaleId}/products/${productId}/label/print`, 'POST', {});
+    if (res.error) {
+      toast('Label error: ' + res.error, 5000);
+      return;
+    }
+    toast(res.status === 'simulated' ? 'Simulated label print created.' : 'Label printed.');
+    const activePage = document.querySelector('.page.visible').id;
+    if (activePage === 'page-labels') renderLabels();
+  } finally {
+    printRequestInProgress = false;
+  }
+}
+
+async function saveEdit() {
+  const customer = document.getElementById('edit-customer').value.trim();
+  const sale_date = document.getElementById('edit-date').value;
+  const notes = document.getElementById('edit-notes').value.trim();
+  if (!customer) { showEditErr('Customer name required.'); return; }
+  if (!sale_date) { showEditErr('Date required.'); return; }
+  let products, payments;
+  try {
+    products = getProductsFromContainer('edit-products-container');
+    payments = getPaymentsFromContainer('edit-payments-container','edit-products-container');
+  } catch(e) { showEditErr(e.message); return; }
+  if (!products.length) { showEditErr('At least one product required.'); return; }
+  const res = await api('/api/sales/'+editingSaleId,'PUT',{customer,sale_date,notes,products,payments});
+  if (res.error) { showEditErr(res.error); return; }
+  clearEditErr();
+  toast('Sale updated!');
+  closeModal();
+  renderRecent(); if (IS_ADMIN) loadDash();
+  const activePage = document.querySelector('.page.visible').id;
+  if (activePage==='page-today') renderTodaySales();
+  if (activePage==='page-history') renderHistory();
+  if (activePage==='page-days') renderDays();
+}
+
+async function deleteSale() {
+  if (!confirm('Delete this sale? This cannot be undone.')) return;
+  await api('/api/sales/'+editingSaleId,'DELETE');
+  toast('Sale deleted.');
+  closeModal();
+  renderRecent(); if (IS_ADMIN) loadDash();
+}
+
+function closeModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  editingSaleId = null;
+}
+
+// ── EXPORT ───────────────────────────────────────────────────────────────────
+function exportExcel(mode, value) {
+  let url = '/api/export?mode=' + mode;
+  if (mode === 'day' && value) url += '&date=' + value;
+  if (mode === 'year' && value) url += '&year=' + value;
+  window.location.href = url;
+}
+
+function exportOverallRevenue() {
+  window.location.href = '/api/export/overall-revenue';
+}
+
+// ── ACCESS MODE ───────────────────────────────────────────────────────────────
+async function logout() {
+  await api('/api/logout', 'POST', {});
+  window.location.href = '/login';
+}
+
+function applyAccessMode() {
+  document.getElementById('role-badge').textContent = USER_ROLE ? `MODE: ${USER_ROLE.toUpperCase()}` : '';
+  if (!IS_ADMIN) {
+    document.querySelectorAll('[data-admin-only="true"]').forEach(el => el.style.display = 'none');
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+applyAccessMode();
+document.getElementById('new-date').value = today();
+document.getElementById('day-filter-month').value = today().slice(0,7);
+// Populate year dropdown
+(function() {
+  const sel = document.getElementById('day-filter-year');
+  const curYear = new Date().getFullYear();
+  for (let i = 0; i < 6; i++) {
+    const y = curYear - i;
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    sel.appendChild(opt);
+  }
+
+  const exportSel = document.getElementById('export-year');
+  if (exportSel) {
+    for (let i = 0; i < 6; i++) {
+      const y = curYear - i;
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      exportSel.appendChild(opt);
+    }
+  }
+})();
+addProductBlock();
+addPaymentRow('payments-container','products-container',{method:'', amount:''});
+updateAllPaymentTotals();
+if (IS_ADMIN) loadDash();
+renderRecent();
+</script>
+</body>
+</html>

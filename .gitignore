@@ -1,0 +1,29 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# P-touch files
+ptouch/
+ptouch_templates*
+
+# Database + SQLite temporary files
+sales.db
+sales.db-shm
+sales.db-wal
+
+# Database backups
+backups/
+
+# README / local documentation
+README*
+
+# Logs
+*.log
+
+# Environment/secrets, if you ever add one
+.env
+.env.*
+
+launcher_log.txt
