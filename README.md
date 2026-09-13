@@ -62,8 +62,6 @@ The queue tracks information such as:
 * Printed and unprinted status
 * Printing errors and retries
 
-Physical label printing uses a local **P-touch printer integration**. Printer-specific configuration and template files are excluded from the public repository.
-
 ## 💾 Database & Backups
 
 Application data is stored locally using SQLite.
